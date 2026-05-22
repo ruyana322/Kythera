@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-# ╔══════════════════════════════════════════════════════════════╗
-# ║   KYTHERA CORE — core.py                                    ║
-# ║   Python Binary Manipulation Engine                         ║
-# ║   MP4 Box Parser · mvhd Patcher · Faststart Optimizer       ║
-# ╚══════════════════════════════════════════════════════════════╝
 
 import sys
 import os
@@ -13,7 +8,6 @@ import json
 import hashlib
 from datetime import datetime
 
-# ── ANSI COLORS ───────────────────────────────────────────────
 CYAN   = '\033[96m'
 WHITE  = '\033[97m'
 YELLOW = '\033[93m'
@@ -36,9 +30,6 @@ def section(title):
     print(f"{CYAN}  ╚{bar}╝{RESET}\n")
 
 
-# ══════════════════════════════════════════════════════════════
-#  MP4Box — representasi satu box/atom MP4
-# ══════════════════════════════════════════════════════════════
 class MP4Box:
     __slots__ = ('size', 'type', 'offset', 'data')
 
@@ -52,16 +43,12 @@ class MP4Box:
         return f"MP4Box(type={self.type!r}, size={self.size}, offset={self.offset})"
 
 
-# ══════════════════════════════════════════════════════════════
-#  KytheraCoreEngine — mesin utama
-# ══════════════════════════════════════════════════════════════
 class KytheraCoreEngine:
 
     def __init__(self, filepath: str):
         self.filepath    = filepath
         self.backup_path = filepath + '.bak'
 
-    # ── Internal: validasi file ───────────────────────────────
     def _validate(self) -> bool:
         if not os.path.exists(self.filepath):
             perr(f"File tidak ditemukan: {self.filepath}")
@@ -73,7 +60,6 @@ class KytheraCoreEngine:
             pw("Ekstensi bukan .mp4 — tetap dilanjutkan.")
         return True
 
-    # ── Internal: baca seluruh file ke bytes ──────────────────
     def _read_file(self) -> bytes | None:
         try:
             with open(self.filepath, 'rb') as f:
@@ -82,7 +68,6 @@ class KytheraCoreEngine:
             perr(f"Gagal membaca file: {e}")
             return None
 
-    # ── Internal: auto-backup sebelum modifikasi ──────────────
     def _backup(self) -> bool:
         if os.path.exists(self.backup_path):
             pw(f"Backup sudah ada: {os.path.basename(self.backup_path)}")
@@ -95,7 +80,6 @@ class KytheraCoreEngine:
             perr(f"Gagal membuat backup: {e}")
             return False
 
-    # ── Internal: parse linear box list dari binary data ──────
     def _parse_boxes(self, data: bytes, base_offset: int = 0) -> list[MP4Box]:
         boxes = []
         pos   = 0
@@ -107,12 +91,10 @@ class KytheraCoreEngine:
                 box_type = data[pos+4:pos+8].decode('latin-1')
 
                 if raw_size == 1:
-                    # Extended 64-bit size
                     if pos + 16 > end:
                         break
                     size = struct.unpack('>Q', data[pos+8:pos+16])[0]
                 elif raw_size == 0:
-                    # Extends to end of parent
                     size = end - pos
                 else:
                     size = raw_size
@@ -134,7 +116,6 @@ class KytheraCoreEngine:
 
         return boxes
 
-    # ── Internal: patch stco/co64 offset tables ───────────────
     def _patch_chunk_offsets(self, moov_data: bytes, shift: int) -> bytes:
         buf = bytearray(moov_data)
         pos = 0
@@ -178,7 +159,6 @@ class KytheraCoreEngine:
 
         return bytes(buf)
 
-    # ── Internal: parse mvhd fields (version 0 & 1) ───────────
     def _parse_mvhd(self, mvhd_payload: bytes) -> dict:
         """mvhd_payload = bytes setelah string 'mvhd' (4 bytes)"""
         if len(mvhd_payload) < 4:
@@ -210,9 +190,6 @@ class KytheraCoreEngine:
 
         return result
 
-    # ══════════════════════════════════════════════════════════
-    #  MENU 1 — Scan MP4 Structure
-    # ══════════════════════════════════════════════════════════
     def scan_structure(self):
         section("SCAN MP4 STRUCTURE")
         if not self._validate():
@@ -267,9 +244,6 @@ class KytheraCoreEngine:
 
         print(f"\n  {GREEN}Total: {len(boxes)} top-level box(es) ditemukan{RESET}")
 
-    # ══════════════════════════════════════════════════════════
-    #  MENU 2 — Detect moov / mvhd
-    # ══════════════════════════════════════════════════════════
     def detect_moov_mvhd(self):
         section("DETECT moov / mvhd")
         if not self._validate():
@@ -278,7 +252,6 @@ class KytheraCoreEngine:
         if data is None:
             return
 
-        # ─ moov ──────────────────────────────────────────────
         moov_pos = data.find(b'moov')
         mdat_pos = data.find(b'mdat')
 
@@ -296,8 +269,6 @@ class KytheraCoreEngine:
                     pw("Posisi moov: SETELAH mdat → Tidak web-optimized (gunakan menu [6])")
 
         print()
-
-        # ─ mvhd ──────────────────────────────────────────────
         mvhd_pos = data.find(b'mvhd')
         if mvhd_pos == -1:
             perr("'mvhd' atom TIDAK ditemukan.")
@@ -329,9 +300,6 @@ class KytheraCoreEngine:
                 print(f"    Nilai saat  : {BOLD}0x{b44:02X}{RESET}  ({b44} dec)")
                 print(f"  {YELLOW}{'━'*48}{RESET}")
 
-    # ══════════════════════════════════════════════════════════
-    #  MENU 3 — Repair Missing moov
-    # ══════════════════════════════════════════════════════════
     def repair_missing_moov(self):
         section("REPAIR MISSING moov")
         if not self._validate():
@@ -348,7 +316,6 @@ class KytheraCoreEngine:
         perr("'moov' tidak ditemukan!")
         print()
 
-        # Cek fragmented MP4 (moof)
         moof_pos = data.find(b'moof')
         if moof_pos != -1:
             pw(f"'moof' (fragment) ditemukan di offset {moof_pos - 4}")
@@ -357,7 +324,6 @@ class KytheraCoreEngine:
             print(f"    {CYAN}ffmpeg -i input.mp4 -c copy -movflags faststart output.mp4{RESET}")
             return
 
-        # Cek apakah ada mdat
         mdat_pos = data.find(b'mdat')
         if mdat_pos != -1:
             pw(f"'mdat' ada di offset {mdat_pos - 4} tapi tidak ada 'moov'.")
@@ -370,15 +336,11 @@ class KytheraCoreEngine:
             perr("Tidak ada mdat maupun moov — file corrupt sangat parah.")
             pi("Pertimbangkan recovery dengan hex editor manual atau tool forensik.")
 
-    # ══════════════════════════════════════════════════════════
-    #  MENU 4 — Patch mvhd Byte  ★ FUNGSI UTAMA
-    # ══════════════════════════════════════════════════════════
     def patch_mvhd_byte(self):
         section("PATCH mvhd BYTE  ★")
         if not self._validate():
             return
 
-        # ── BACKUP dulu, sebelum baca ulang atau modifikasi ──
         if not self._backup():
             perr("Patch dibatalkan — backup gagal dibuat.")
             return
@@ -391,13 +353,7 @@ class KytheraCoreEngine:
         if mvhd_pos == -1:
             perr("'mvhd' tidak ditemukan. File bukan MP4 valid.")
             return
-
-        # Target: byte ke-44 dihitung dari awal string 'mvhd'
-        # Layout: [size 4B][mvhd 4B][version 1B][flags 3B]
-        #         [ctime 4B][mtime 4B][timescale 4B][duration 4B]
-        #         [rate 4B][volume 2B][reserved 10B]
-        #         [matrix starts at offset 36 from 'mvhd']
-        # Byte ke-44 dari 'm' = indeks 44 dari mvhd_pos
+            
         target_abs = mvhd_pos + 44
 
         if target_abs >= len(data):
@@ -410,7 +366,6 @@ class KytheraCoreEngine:
         pi(f"Target offset (mvhd + 44)     : {target_abs}")
         pi(f"Nilai byte saat ini           : {BOLD}0x{current_val:02X}{RESET}  ({current_val} dec)")
 
-        # ─ Tampilkan context bytes ────────────────────────────
         ctx_s = max(0, target_abs - 6)
         ctx_e = min(len(data), target_abs + 7)
         print()
@@ -425,7 +380,6 @@ class KytheraCoreEngine:
         print("  " + " ".join(hex_parts))
         print()
 
-        # ─ Input nilai baru ───────────────────────────────────
         print(f"  {CYAN}Masukkan nilai hex baru (1 byte, contoh: 01  37  FF  00):{RESET}")
         try:
             raw = input(f"  {YELLOW}» {RESET}").strip()
@@ -484,9 +438,6 @@ class KytheraCoreEngine:
         except Exception as e:
             perr(f"Gagal menulis: {e}")
 
-    # ══════════════════════════════════════════════════════════
-    #  MENU 5 — Analyze Metadata
-    # ══════════════════════════════════════════════════════════
     def analyze_metadata(self):
         section("ANALYZE METADATA")
         if not self._validate():
@@ -504,14 +455,12 @@ class KytheraCoreEngine:
         pi(f"MD5      : {GRAY}{md5}{RESET}")
         print()
 
-        # ─ ftyp ──────────────────────────────────────────────
         ftyp_pos = data.find(b'ftyp')
         if ftyp_pos != -1:
             brand  = data[ftyp_pos+4:ftyp_pos+8].decode('latin-1').rstrip('\x00')
             minor  = struct.unpack('>I', data[ftyp_pos+8:ftyp_pos+12])[0]
             pi(f"Brand    : {CYAN}{brand}{RESET}  (minor ver {minor})")
 
-        # ─ mvhd ──────────────────────────────────────────────
         mvhd_pos = data.find(b'mvhd')
         if mvhd_pos != -1:
             info = self._parse_mvhd(data[mvhd_pos + 4:])
@@ -528,7 +477,6 @@ class KytheraCoreEngine:
 
         print()
 
-        # ─ Track handlers ─────────────────────────────────────
         handlers = []
         pos = 0
         while True:
@@ -547,7 +495,6 @@ class KytheraCoreEngine:
         trak_count = data.count(b'trak')
         pi(f"Tracks   : {trak_count}")
 
-        # ─ udta / ilst (iTunes tags) ──────────────────────────
         print()
         has_udta = data.find(b'udta') != -1
         has_ilst = data.find(b'ilst') != -1
@@ -578,7 +525,6 @@ class KytheraCoreEngine:
                 except Exception:
                     pass
 
-        # ─ Faststart check ────────────────────────────────────
         moov_pos = data.find(b'moov')
         mdat_pos = data.find(b'mdat')
         print()
@@ -586,9 +532,6 @@ class KytheraCoreEngine:
             fs = moov_pos < mdat_pos
             (pok if fs else pw)(f"Faststart: {'YA — moov sebelum mdat ✓' if fs else 'TIDAK — gunakan menu [6]'}")
 
-    # ══════════════════════════════════════════════════════════
-    #  MENU 6 — Faststart Optimizer
-    # ══════════════════════════════════════════════════════════
     def faststart_optimizer(self):
         section("FASTSTART OPTIMIZER")
         if not self._validate():
@@ -628,7 +571,6 @@ class KytheraCoreEngine:
 
         first_mdat = mdat_boxes[0]
 
-        # Cek apakah sudah faststart
         if moov_box.offset < first_mdat.offset:
             pok("File sudah Faststart! moov sudah sebelum mdat. Tidak perlu diproses.")
             return
@@ -638,9 +580,6 @@ class KytheraCoreEngine:
         pi("Memulai reorder moov → sebelum mdat...")
         print()
 
-        # ─ Hitung shift offset yang benar ─────────────────────
-        # Layout baru: [ftyp?][moov][rest_before_mdat][mdat+]
-        # Hitung total bytes sebelum mdat di layout BARU
         new_before_mdat = 0
         if ftyp_box:
             new_before_mdat += ftyp_box.size
@@ -649,31 +588,26 @@ class KytheraCoreEngine:
             if rb.offset < first_mdat.offset:
                 new_before_mdat += rb.size
 
-        new_mdat_data_start      = new_before_mdat + 8   # +8: mdat header
+        new_mdat_data_start      = new_before_mdat + 8  
         original_mdat_data_start = first_mdat.offset + 8
 
         shift = new_mdat_data_start - original_mdat_data_start
         pi(f"Chunk offset shift: {shift:+d} bytes")
 
-        # Patch stco/co64 di dalam moov
         patched_moov = self._patch_chunk_offsets(moov_box.data, shift)
         print()
 
-        # ─ Susun output baru ──────────────────────────────────
         parts = []
         if ftyp_box:
             parts.append(ftyp_box.data)
         parts.append(patched_moov)
-        # box-box lain (bukan ftyp/moov/mdat/free)
         for rb in rest_boxes:
             parts.append(rb.data)
-        # mdat di akhir
         for mb in mdat_boxes:
             parts.append(mb.data)
 
         new_data = b''.join(parts)
 
-        # ─ Simpan sebagai file baru ───────────────────────────
         out_path = self.filepath.replace('.mp4', '_faststart.mp4')
         if out_path == self.filepath:
             out_path = self.filepath + '_faststart.mp4'
@@ -686,9 +620,6 @@ class KytheraCoreEngine:
         except Exception as e:
             perr(f"Gagal menulis output: {e}")
 
-    # ══════════════════════════════════════════════════════════
-    #  MENU 7 — Check Corruption
-    # ══════════════════════════════════════════════════════════
     def check_corruption(self):
         section("CHECK CORRUPTION")
         if not self._validate():
@@ -702,13 +633,11 @@ class KytheraCoreEngine:
         ok_list  = []
         fsize    = len(data)
 
-        # ── Check 1: ukuran minimal ───────────────────────────
         if fsize < 16:
             issues.append("File terlalu kecil (< 16 bytes)")
         else:
             ok_list.append(f"File size: {fsize:,} bytes")
 
-        # ── Check 2: ftyp ─────────────────────────────────────
         ftyp_pos = data.find(b'ftyp')
         if ftyp_pos == -1:
             warnings.append("'ftyp' tidak ditemukan (bukan MP4 standar?)")
@@ -717,7 +646,6 @@ class KytheraCoreEngine:
         else:
             ok_list.append(f"'ftyp' valid di offset {ftyp_pos - 4}")
 
-        # ── Check 3: moov ─────────────────────────────────────
         moov_pos = data.find(b'moov')
         if moov_pos == -1:
             issues.append("'moov' TIDAK ditemukan — file corrupt atau truncated")
@@ -729,7 +657,6 @@ class KytheraCoreEngine:
             else:
                 ok_list.append(f"'moov' valid — size {moov_size_raw:,} bytes")
 
-        # ── Check 4: mvhd ─────────────────────────────────────
         mvhd_pos = data.find(b'mvhd')
         if mvhd_pos == -1:
             issues.append("'mvhd' tidak ada di dalam moov")
@@ -741,7 +668,6 @@ class KytheraCoreEngine:
             else:
                 ok_list.append(f"'mvhd' version {version} (valid)")
 
-        # ── Check 5: mdat ─────────────────────────────────────
         mdat_pos = data.find(b'mdat')
         if mdat_pos == -1:
             issues.append("'mdat' tidak ditemukan — tidak ada media data")
@@ -755,7 +681,6 @@ class KytheraCoreEngine:
             else:
                 ok_list.append(f"'mdat' valid — size {mdat_size_raw:,} bytes")
 
-        # ── Check 6: total box coverage ───────────────────────
         boxes      = self._parse_boxes(data)
         total_cov  = sum(b.size for b in boxes)
         gap        = abs(total_cov - fsize)
@@ -764,11 +689,9 @@ class KytheraCoreEngine:
         else:
             ok_list.append(f"Box coverage OK ({gap} bytes gap)")
 
-        # ── Check 7: backup ───────────────────────────────────
         if os.path.exists(self.backup_path):
             ok_list.append(f"Backup ada: {os.path.basename(self.backup_path)}")
 
-        # ── Report ────────────────────────────────────────────
         print()
         for item in ok_list:
             print(f"  {GREEN}✓{RESET}  {item}")
@@ -787,9 +710,6 @@ class KytheraCoreEngine:
             print(f"  {RED}{BOLD}STATUS: CORRUPT / BERMASALAH ({len(issues)} error){RESET}")
         print(f"  {CYAN}{'━'*48}{RESET}")
 
-    # ══════════════════════════════════════════════════════════
-    #  MENU 8 — Export Scan Report (JSON)
-    # ══════════════════════════════════════════════════════════
     def export_scan_report(self):
         section("EXPORT SCAN REPORT")
         if not self._validate():
@@ -853,7 +773,6 @@ class KytheraCoreEngine:
             "has_backup": os.path.exists(self.backup_path),
         }
 
-        # ─ Simpan report ─────────────────────────────────────
         report_name = os.path.basename(self.filepath).replace('.mp4', '_kythera.json')
         report_path = os.path.join(os.path.dirname(os.path.abspath(self.filepath)), report_name)
 
@@ -866,7 +785,6 @@ class KytheraCoreEngine:
             perr(f"Gagal menyimpan report: {e}")
             return
 
-        # ─ Print ringkasan ────────────────────────────────────
         print()
         print(f"  {CYAN}{'─'*40}{RESET}")
         print(f"  {WHITE}RINGKASAN:{RESET}")
@@ -876,9 +794,6 @@ class KytheraCoreEngine:
         print(f"  {CYAN}{'─'*40}{RESET}")
 
 
-# ══════════════════════════════════════════════════════════════
-#  ENTRYPOINT
-# ══════════════════════════════════════════════════════════════
 MENU_MAP = {
     '1': ('scan_structure',       'Scan MP4 Structure'),
     '2': ('detect_moov_mvhd',     'Detect moov/mvhd'),
