@@ -1,13 +1,7 @@
 <div align="center">
 
 ```
-  __ __     __  __                   
- / //_/_ __/ /_/ /  ___ _______ _    
-/ ,< / // / __/ _ \/ -_) __/ _ `/    
-/_/|_|\_, /\__/_//_/\__/_/  \_,_/     
-      /___/   [ C O R E ]              
-                                     
-         ✧ by kythera ✧
+kythera-core v2.1.0
 ```
 
 **MP4 Binary Structure & Metadata Toolkit**  
@@ -32,14 +26,14 @@
 
 | # | Fitur | Deskripsi |
 |---|-------|-----------|
-| 1 | **Scan MP4 Structure** | Membaca dan menampilkan hierarki atom/box dalam file MP4 |
-| 2 | **Detect moov / mvhd** | Mendeteksi keberadaan dan posisi atom `moov` dan `mvhd` |
-| 3 | **Repair Missing moov** | Mencoba memperbaiki file MP4 dengan atom `moov` yang hilang atau rusak |
-| 4 | **Patch mvhd Byte** ⭐ | Patch byte spesifik dalam header `mvhd` — fungsi utama toolkit ini |
-| 5 | **Analyze Metadata** | Mengekstrak dan menampilkan metadata lengkap dari file MP4 |
-| 6 | **Faststart Optimizer** | Memindahkan atom `moov` ke awal file untuk streaming optimal |
-| 7 | **Check Corruption** | Memeriksa integritas struktur file dan mendeteksi kerusakan |
-| 8 | **Export Scan Report** | Mengekspor hasil scan ke file laporan |
+| 1 | **Scan structure** | Membaca dan menampilkan hierarki atom/box dalam file MP4 |
+| 2 | **Detect moov/mvhd** | Mendeteksi keberadaan dan posisi atom `moov` dan `mvhd` |
+| 3 | **Repair moov** | Mencoba memperbaiki file MP4 dengan atom `moov` yang hilang atau rusak |
+| 4 | **Patch mvhd byte** ⭐ | Patch byte spesifik dalam header `mvhd` — fungsi utama toolkit ini |
+| 5 | **Analyze metadata** | Mengekstrak dan menampilkan metadata lengkap dari file MP4 |
+| 6 | **Faststart optimizer** | Memindahkan atom `moov` ke awal file untuk streaming optimal |
+| 7 | **Check corruption** | Memeriksa integritas struktur file dan mendeteksi kerusakan |
+| 8 | **Export report** | Mengekspor hasil scan ke file laporan |
 
 ---
 
@@ -59,14 +53,9 @@ pkg update && pkg install python
 ## Installation
 
 ```bash
-# Clone repo
 git clone https://github.com/ruyana322/Kythera.git
 cd Kythera
-
-# Beri permission
 chmod +x kythera.sh
-
-# Jalankan
 bash kythera.sh
 ```
 
@@ -74,41 +63,64 @@ bash kythera.sh
 
 ## Usage
 
-Setelah dijalankan, pilih menu dengan angka `[1–8]`:
+Saat pertama dijalankan, file browser otomatis terbuka untuk memilih file MP4:
 
 ```
-  __ __     __  __                   
- / //_/_ __/ /_/ /  ___ _______ _    
-/ ,< / // / __/ _ \/ -_) __/ _ `/    
-/_/|_|\_, /\__/_//_/\__/_/  \_,_/     
-      /___/   [ C O R E ]              
-                                     
-         ✧ by kythera ✧
+ kythera-core / file browser
+ ───────────────────────────────────────────────────────────
 
-╭─────────────────────────────────────────╮
-│                                         │
-│  [1] Scan MP4 Structure                 │
-│  [2] Detect moov/mvhd                   │
-│  [3] Repair Missing moov                │
-│  [4] Patch mvhd Byte  ★ FUNGSI UTAMA   │
-│  [5] Analyze Metadata                   │
-│  [6] Faststart Optimizer                │
-│  [7] Check Corruption                   │
-│  [8] Export Scan Report                 │
-│                                         │
-│  [0] Exit System                        │
-│                                         │
-╰─────────────────────────────────────────╯
+ location: /storage/emulated/0
 
-> Select module (0-8): _
+  1  DCIM/
+  2  Download/
+  3  Movies/
+  4  broken.mp4   12M
+
+ ───────────────────────────────────────────────────────────
+ ketik nomor untuk pilih, atau:
+  p  masukkan path manual
+  s  storage Android (/storage/emulated/0)
+  h  home Termux (~)
+  0  batal / kembali
+
+ ───────────────────────────────────────────────────────────
+ >
 ```
 
-Input path file bisa dengan **drag & drop** langsung ke terminal Termux.
+Setelah file dipilih, main menu muncul dengan info status file:
 
-### Catatan Penting
+```
+ kythera-core v2.1.0
+ ───────────────────────────────────────────────────────────
 
-- **Menu [4] Patch mvhd Byte** — otomatis membuat backup `.bak` sebelum modifikasi. Pastikan file tidak sedang digunakan proses lain.
-- **Menu [6] Faststart Optimizer** — output disimpan sebagai file baru `*_faststart.mp4`. File asli tidak akan diubah.
+ session: 2026-05-22 12:20:14
+ target:   broken.mp4  12M
+ status:   ⚠  moov atom not found
+
+ ───────────────────────────────────────────────────────────
+
+  1  Scan structure
+  2  Detect moov/mvhd
+  3  Repair moov
+  4  Patch mvhd byte              [primary]
+  5  Analyze metadata
+  6  Faststart optimizer
+  7  Check corruption
+  8  Export report
+
+  f  change file
+  0  exit
+
+ ───────────────────────────────────────────────────────────
+ >
+```
+
+### Catatan
+
+- **[4] Patch mvhd byte** — auto-backup `.bak` dibuat sebelum modifikasi
+- **[6] Faststart optimizer** — output disimpan sebagai `*_faststart.mp4`, file asli tidak diubah
+- **[f]** — ganti file tanpa perlu restart tool
+- Status file (`✓ OK` / `⚠ moov not found` / `✗ corrupted`) otomatis update setiap selesai proses
 
 ---
 
@@ -116,8 +128,8 @@ Input path file bisa dengan **drag & drop** langsung ke terminal Termux.
 
 ```
 Kythera/
-├── kythera.sh    # Bash UI wrapper & launcher
-├── core.py       # Python engine — logika utama semua fitur
+├── kythera.sh    # bash UI wrapper, file browser & launcher
+├── core.py       # python engine — logika utama semua fitur
 └── README.md
 ```
 
@@ -126,17 +138,15 @@ Kythera/
 ## How It Works
 
 ```
-kythera.sh  ──►  UI / Menu Handler
-                      │
-                      ▼
-               core.py [menu_number] [filepath]
-                      │
-                      ▼
-            Binary analysis / patching
-            pada struktur MP4 (atom-level)
+kythera.sh
+    │
+    ├── file browser  →  pilih file MP4
+    │
+    └── main menu  →  core.py [menu_number] [filepath]
+                           │
+                           └── binary analysis / patching
+                               pada struktur MP4 (atom-level)
 ```
-
-`kythera.sh` bertindak sebagai wrapper UI, lalu memanggil `core.py` dengan argumen nomor menu dan path file. Semua logika biner dihandle oleh Python core.
 
 ---
 
