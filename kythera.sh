@@ -37,7 +37,6 @@ update_file_status() {
     fi
 }
 
-# ── FILE BROWSER ──────────────────────────────────────────────
 file_browser() {
     local current_dir="${1:-$HOME}"
 
@@ -50,24 +49,20 @@ file_browser() {
         echo -e " ${GRAY}location:${RESET} ${WHITE}$current_dir${RESET}"
         echo ""
 
-        # Kumpulkan isi direktori
         local entries=()
         local display=()
 
-        # Selalu sediakan opsi naik direktori
         if [[ "$current_dir" != "/" ]]; then
             entries+=("__UP__")
             display+=("${GRAY}..  (up)${RESET}")
         fi
 
-        # Tambahkan subdirektori dulu
         while IFS= read -r d; do
             [[ -z "$d" ]] && continue
             entries+=("$d")
             display+=("${CYAN}$(basename "$d")/${RESET}")
         done < <(find "$current_dir" -maxdepth 1 -mindepth 1 -type d ! -name '.*' | sort)
 
-        # Tambahkan file MP4
         local mp4_count=0
         while IFS= read -r f; do
             [[ -z "$f" ]] && continue
@@ -78,7 +73,6 @@ file_browser() {
             (( mp4_count++ ))
         done < <(find "$current_dir" -maxdepth 1 -mindepth 1 -type f -iname '*.mp4' | sort)
 
-        # Tampilkan semua entry dengan nomor
         local total=${#entries[@]}
         if [[ $total -eq 0 ]] || ( [[ $total -eq 1 ]] && [[ "${entries[0]}" == "__UP__" ]] && [[ $mp4_count -eq 0 ]] ); then
             echo -e " ${GRAY}(folder kosong / tidak ada file MP4)${RESET}"
@@ -161,7 +155,6 @@ file_browser() {
     done
 }
 
-# ── MAIN MENU ─────────────────────────────────────────────────
 show_ui() {
     clear
     local fname="${GRAY}no file loaded${RESET}"
@@ -179,17 +172,17 @@ show_ui() {
     echo ""
     echo -e "$DIVIDER"
     echo ""
-    echo -e "  ${WHITE}1${RESET}  ${GRAY}Scan structure${RESET}"
-    echo -e "  ${WHITE}2${RESET}  ${GRAY}Detect moov/mvhd${RESET}"
-    echo -e "  ${WHITE}3${RESET}  ${GRAY}Repair moov${RESET}"
-    echo -e "  ${WHITE}4${RESET}  ${GRAY}Patch mvhd byte${RESET}              ${CYAN}[primary]${RESET}"
-    echo -e "  ${WHITE}5${RESET}  ${GRAY}Analyze metadata${RESET}"
-    echo -e "  ${WHITE}6${RESET}  ${GRAY}Faststart optimizer${RESET}"
-    echo -e "  ${WHITE}7${RESET}  ${GRAY}Check corruption${RESET}"
-    echo -e "  ${WHITE}8${RESET}  ${GRAY}Export report${RESET}"
+    echo -e "  ${CYAN}1${RESET}  ${WHITE}Scan structure${RESET}"
+    echo -e "  ${CYAN}2${RESET}  ${WHITE}Detect moov/mvhd${RESET}"
+    echo -e "  ${CYAN}3${RESET}  ${WHITE}Repair moov${RESET}"
+    echo -e "  ${CYAN}4${RESET}  ${WHITE}Patch mvhd byte${RESET}              ${CYAN}[primary]${RESET}"
+    echo -e "  ${CYAN}5${RESET}  ${WHITE}Analyze metadata${RESET}"
+    echo -e "  ${CYAN}6${RESET}  ${WHITE}Faststart optimizer${RESET}"
+    echo -e "  ${CYAN}7${RESET}  ${WHITE}Check corruption${RESET}"
+    echo -e "  ${CYAN}8${RESET}  ${WHITE}Export report${RESET}"
     echo ""
-    echo -e "  ${WHITE}f${RESET}  ${GRAY}change file${RESET}"
-    echo -e "  ${WHITE}0${RESET}  ${GRAY}exit${RESET}"
+    echo -e "  ${GRAY}f  change file${RESET}"
+    echo -e "  ${GRAY}0  exit${RESET}"
     echo ""
     echo -e "$DIVIDER"
     echo -ne " ${CYAN}>${RESET} "
@@ -254,14 +247,12 @@ handle_menu() {
     pause_continue
 }
 
-# ── MAIN ──────────────────────────────────────────────────────
 main() {
     if ! check_deps; then
         echo ""
         exit 1
     fi
 
-    # File browser dulu sebelum menu utama
     clear
     echo ""
     echo -e " ${CYAN}${BOLD}kythera-core v2.1.0${RESET}"
@@ -282,7 +273,6 @@ main() {
 
     update_file_status "$SELECTED_FILE"
 
-    # Loop menu utama
     while true; do
         show_ui
         read -r choice
