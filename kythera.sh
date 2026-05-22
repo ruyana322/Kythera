@@ -1,10 +1,4 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# ╔══════════════════════════════════════════════════════════╗
-# ║          KYTHERA CORE — kythera.sh                      ║
-# ║          MP4 Binary Structure & Metadata Toolkit        ║
-# ╚══════════════════════════════════════════════════════════╝
-
-# ── ANSI COLOR PALETTE ────────────────────────────────────────
 CYAN='\033[96m'
 WHITE='\033[97m'
 YELLOW='\033[93m'
@@ -15,11 +9,9 @@ BOLD='\033[1m'
 DIM='\033[2m'
 RESET='\033[0m'
 
-# ── SCRIPT LOCATION ───────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CORE_PY="$SCRIPT_DIR/core.py"
 
-# ── BANNER ────────────────────────────────────────────────────
 show_banner() {
     clear
     echo -e "${CYAN}${BOLD}"
@@ -33,9 +25,7 @@ show_banner() {
     echo ""
 }
 
-# ── MAIN MENU ─────────────────────────────────────────────────
 show_menu() {
-    # inner width = 41, total line = 43
     echo -e "${CYAN}╭─────────────────────────────────────────╮${RESET}"
     echo -e "${CYAN}│${RESET}                                         ${CYAN}│${RESET}"
     echo -e "${CYAN}│${RESET}  ${CYAN}[1]${RESET} Scan MP4 Structure                 ${CYAN}│${RESET}"
@@ -54,7 +44,6 @@ show_menu() {
     echo -ne "${CYAN}> ${WHITE}Select module (0-8): ${RESET}"
 }
 
-# ── DEPENDENCY CHECK ──────────────────────────────────────────
 check_deps() {
     local ok=1
 
@@ -72,7 +61,6 @@ check_deps() {
     [[ $ok -eq 1 ]]
 }
 
-# ── INPUT FILE PATH ───────────────────────────────────────────
 prompt_filepath() {
     echo ""
     echo -e "${CYAN}╭─────────────────────────────────────────╮${RESET}"
@@ -103,7 +91,6 @@ prompt_filepath() {
     return 0
 }
 
-# ── RUN PYTHON CORE ───────────────────────────────────────────
 run_core() {
     local menu_num="$1"
     local filepath="$2"
@@ -121,14 +108,12 @@ run_core() {
     fi
 }
 
-# ── PAUSE ─────────────────────────────────────────────────────
 pause_continue() {
     echo ""
     echo -e "  ${GRAY}Tekan ${WHITE}Enter${GRAY} untuk kembali ke menu...${RESET}"
     read -r
 }
 
-# ── MENU HANDLER ──────────────────────────────────────────────
 handle_menu() {
     local choice="$1"
     local label="$2"
@@ -155,7 +140,6 @@ handle_menu() {
     pause_continue
 }
 
-# ── MAIN LOOP ─────────────────────────────────────────────────
 main() {
     if ! check_deps; then
         echo -e "\n  ${RED}Dependency check gagal. Perbaiki masalah di atas lalu jalankan ulang.${RESET}\n"
